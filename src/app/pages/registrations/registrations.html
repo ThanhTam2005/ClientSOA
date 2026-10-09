@@ -1,0 +1,86 @@
+<div class="registrations-page">
+    <div class="page-header">
+        <div>
+            <h1>Đăng ký đề tài</h1>
+            <p>Danh sách đăng ký khóa luận của sinh viên</p>
+        </div>
+        <button class="btn-primary" (click)="openAddForm()">
+            + Tạo đăng ký
+        </button>
+    </div>
+
+    <div class="table-card">
+        <div class="toolbar">
+            <input type="text" placeholder="Tìm sinh viên, đề tài, mã đăng ký..." [(ngModel)]="searchText" />
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã đăng ký</th>
+                    <th>Mã SV</th>
+                    <th>Tên sinh viên</th>
+                    <th>Mã đề tài</th>
+                    <th>Tên đề tài</th>
+                    <th>Ngày đăng ký</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let item of filteredRegistrations">
+                    <td>{{ item.maDangKy }}</td>
+                    <td>{{ item.mssv }}</td>
+                    <td>{{ item.tenSinhVien }}</td>
+                    <td>{{ item.maDeTai }}</td>
+                    <td>{{ item.tenDeTai }}</td>
+                    <td>{{ item.ngayDangKy }}</td>
+                    <td>
+                        <button class="btn-delete" (click)="deleteRegistration(item.maDangKy)">
+                            Hủy đăng ký
+                        </button>
+                    </td>
+                </tr>
+
+                <tr *ngIf="filteredRegistrations.length === 0">
+                    <td colspan="7" class="empty">
+                        Không có đăng ký nào
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showForm">
+        <div class="modal">
+            <h2>Tạo đăng ký đề tài</h2>
+
+            <form (ngSubmit)="saveRegistration()">
+                <label>Chọn sinh viên *</label>
+                <select name="mssv" [(ngModel)]="form.mssv" required>
+                    <option value="">-- Chọn sinh viên --</option>
+                    <option *ngFor="let s of students" [value]="s.mssv">
+                        {{ s.mssv }} - {{ s.tenSinhVien }}
+                    </option>
+                </select>
+
+                <label>Chọn đề tài *</label>
+                <select name="maDeTai" [(ngModel)]="form.maDeTai" required>
+                    <option value="">-- Chọn đề tài --</option>
+                    <option *ngFor="let t of topics" [value]="t.maDeTai">
+                        {{ t.maDeTai }} - {{ t.tenDeTai }}
+                    </option>
+                </select>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" (click)="cancelForm()">
+                        Hủy
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        Đăng ký
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

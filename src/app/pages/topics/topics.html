@@ -1,0 +1,112 @@
+<div class="topics-page">
+
+    <div class="page-header">
+        <div>
+            <h1>Quản lý đề tài</h1>
+            <p>Danh sách đề tài khóa luận</p>
+        </div>
+
+        <button class="btn-primary" (click)="openAddForm()">
+            + Thêm đề tài
+        </button>
+    </div>
+
+    <div class="table-card">
+
+        <div class="toolbar">
+            <input type="text" placeholder="Tìm mã hoặc tên đề tài..." [(ngModel)]="searchText" />
+
+            <select [(ngModel)]="statusFilter">
+                <option [ngValue]="-1">Tất cả trạng thái</option>
+                <option [ngValue]="0">Mở đăng ký</option>
+                <option [ngValue]="1">Đã đăng ký</option>
+                <option [ngValue]="2">Đã đóng</option>
+            </select>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã đề tài</th>
+                    <th>Tên đề tài</th>
+                    <th>Giảng viên</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let topic of filteredTopics">
+                    <td>{{ topic.maDeTai }}</td>
+                    <td>{{ topic.tenDeTai }}</td>
+                    <td>{{ topic.giangVienHuongDan }}</td>
+                    <td>
+                        <span class="status" [ngClass]="{
+                'open': topic.trangThai === 0,
+                'registered': topic.trangThai === 1,
+                'closed': topic.trangThai === 2
+              }">
+                            {{ getStatusName(topic.trangThai) }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-edit" (click)="editTopic(topic)">
+                            Sửa
+                        </button>
+
+                        <button class="btn-delete" (click)="deleteTopic(topic.maDeTai)">
+                            Xóa
+                        </button>
+                    </td>
+                </tr>
+
+                <tr *ngIf="filteredTopics.length === 0">
+                    <td colspan="5" class="empty">
+                        Không tìm thấy đề tài
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal-overlay" *ngIf="showForm">
+        <div class="modal">
+            <h2>
+                {{ isEditing ? 'Sửa đề tài' : 'Thêm đề tài' }}
+            </h2>
+
+            <form (ngSubmit)="saveTopic()">
+
+                <label>Mã đề tài *</label>
+                <input name="maDeTai" [(ngModel)]="topicForm.maDeTai" [disabled]="isEditing" required />
+
+                <label>Tên đề tài *</label>
+                <input name="tenDeTai" [(ngModel)]="topicForm.tenDeTai" required />
+
+                <label>Mô tả</label>
+                <textarea name="moTa" [(ngModel)]="topicForm.moTa" rows="3"></textarea>
+
+                <label>Giảng viên hướng dẫn *</label>
+                <input name="giangVienHuongDan" [(ngModel)]="topicForm.giangVienHuongDan" required />
+
+                <label>Trạng thái</label>
+                <select name="trangThai" [(ngModel)]="topicForm.trangThai">
+                    <option [ngValue]="0">Mở đăng ký</option>
+                    <option [ngValue]="1">Đã đăng ký</option>
+                    <option [ngValue]="2">Đã đóng</option>
+                </select>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" (click)="cancelForm()">
+                        Hủy
+                    </button>
+
+                    <button type="submit" class="btn-primary">
+                        Lưu
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>

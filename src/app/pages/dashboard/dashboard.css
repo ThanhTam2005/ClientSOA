@@ -1,0 +1,11 @@
+
+.registered {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.empty {
+  text-align: center;
+  color: #64748b;
+  padding: 24px;
+}

@@ -1,0 +1,92 @@
+<div class="students-page">
+
+    <div class="page-header">
+        <div>
+            <h1>Quản lý sinh viên</h1>
+            <p>Danh sách sinh viên trong hệ thống</p>
+        </div>
+
+        <button class="btn-primary" (click)="openAddForm()">
+            + Thêm sinh viên
+        </button>
+    </div>
+
+    <div class="table-card">
+
+        <div class="toolbar">
+            <input type="text" placeholder="Tìm theo mã, tên hoặc email..." [(ngModel)]="searchText" />
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã sinh viên</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Ngành học</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let student of filteredStudents">
+                    <td>{{ student.id }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.email }}</td>
+                    <td>{{ student.major }}</td>
+                    <td>
+                        <button class="btn-edit" (click)="editStudent(student)">
+                            Sửa
+                        </button>
+
+                        <button class="btn-delete" (click)="deleteStudent(student.id)">
+                            Xóa
+                        </button>
+                    </td>
+                </tr>
+
+                <tr *ngIf="filteredStudents.length === 0">
+                    <td colspan="5" class="empty">
+                        Không tìm thấy sinh viên
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <div class="modal-overlay" *ngIf="showForm">
+        <div class="modal">
+            <h2>
+                {{ isEditing ? 'Sửa sinh viên' : 'Thêm sinh viên' }}
+            </h2>
+
+            <form (ngSubmit)="saveStudent()">
+
+                <label>Mã sinh viên</label>
+                <input name="id" [(ngModel)]="studentForm.id" [disabled]="isEditing" required />
+
+                <label>Họ và tên</label>
+                <input name="name" [(ngModel)]="studentForm.name" required />
+
+                <label>Email</label>
+                <input name="email" type="email" [(ngModel)]="studentForm.email" required />
+
+                <label>Ngành học</label>
+                <input name="major" [(ngModel)]="studentForm.major" required />
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" (click)="cancelForm()">
+                        Hủy
+                    </button>
+
+                    <button type="submit" class="btn-primary">
+                        Lưu
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>

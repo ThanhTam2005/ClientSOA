@@ -1,0 +1,64 @@
+<div class="dashboard">
+
+    <div class="page-heading">
+        <h1>Tổng quan hệ thống</h1>
+        <p>Thống kê quản lý đề tài khóa luận</p>
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <span>Tổng sinh viên</span>
+            <h2>{{ totalStudents }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <span>Tổng đề tài</span>
+            <h2>{{ totalTopics }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <span>Tổng đăng ký</span>
+            <h2>{{ totalRegistrations }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <span>Đề tài đang mở</span>
+            <h2>{{ openTopics }}</h2>
+        </div>
+
+    </div>
+
+    <div class="table-card">
+        <h2>Đăng ký gần đây</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Sinh viên</th>
+                    <th>Đề tài</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let item of recentRegistrations">
+                    <td>{{ item.student }}</td>
+                    <td>{{ item.topic }}</td>
+                    <td>
+                        <span class="status registered">
+                            {{ item.status }}
+                        </span>
+                    </td>
+                </tr>
+
+                <tr *ngIf="recentRegistrations.length === 0">
+                    <td colspan="3" class="empty">
+                        Chưa có đăng ký nào
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
