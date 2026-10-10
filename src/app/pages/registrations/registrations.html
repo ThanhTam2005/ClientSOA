@@ -36,6 +36,9 @@
                     <td>{{ item.tenDeTai }}</td>
                     <td>{{ item.ngayDangKy }}</td>
                     <td>
+                        <button class="btn-edit" (click)="editRegistration(item)">
+                            Sửa
+                        </button>
                         <button class="btn-delete" (click)="deleteRegistration(item.maDangKy)">
                             Hủy đăng ký
                         </button>
@@ -53,7 +56,7 @@
 
     <div class="modal-overlay" *ngIf="showForm">
         <div class="modal">
-            <h2>Tạo đăng ký đề tài</h2>
+            <h2>{{ isEditing ? 'Cập nhật đăng ký' : 'Tạo đăng ký đề tài' }}</h2>
 
             <form (ngSubmit)="saveRegistration()">
                 <label>Chọn sinh viên *</label>
@@ -67,8 +70,9 @@
                 <label>Chọn đề tài *</label>
                 <select name="maDeTai" [(ngModel)]="form.maDeTai" required>
                     <option value="">-- Chọn đề tài --</option>
-                    <option *ngFor="let t of topics" [value]="t.maDeTai">
-                        {{ t.maDeTai }} - {{ t.tenDeTai }}
+                    <!-- Khi đang sửa, hiển thị cả đề tài hiện tại của bản ghi đó và các đề tài đang mở khác -->
+                    <option *ngFor="let t of availableTopics" [value]="t.maDeTai">
+                        {{ t.maDeTai }} - {{ t.tenDeTai }} {{ t.trangThai === 2 ? '(Đã đóng/Đang chọn)' : '' }}
                     </option>
                 </select>
 
@@ -77,7 +81,7 @@
                         Hủy
                     </button>
                     <button type="submit" class="btn-primary">
-                        Đăng ký
+                        Lưu
                     </button>
                 </div>
             </form>

@@ -21,6 +21,8 @@ export interface CreateRegistrationDTO {
 
 // Khớp với UpdateRegistrationDTO (Payload cập nhật)[cite: 22]
 export interface UpdateRegistrationDTO {
+  mssv?: string;
+  maDeTai?: string;
   tenSinhVien?: string;
   tenDeTai?: string;
 }
@@ -70,6 +72,7 @@ export class RegistrationService {
     return this.http.put<any>(`${this.apiUrl}/${maDangKy}`, payload).pipe(
       tap(() => {
         this.loadRegistrations(); // Tải lại danh sách sau khi cập nhật
+        this.topicService.loadTopics(); // Tải lại danh sách đề tài để cập nhật số lượng đăng ký
       })
     );
   }

@@ -8,7 +8,7 @@ import {
 } from '../../services/registration';
 
 import { StudentService } from '../../services/student';
-import { TopicService } from '../../services/topic';
+import { TopicService, Topic } from '../../services/topic';
 
 @Component({
   selector: 'app-registrations',
@@ -24,6 +24,8 @@ export class Registrations {
 
   searchText = '';
   showForm = false;
+  isEditing = false;
+  currentMaDangKy = '';
 
   form = {
     mssv: '',
@@ -39,9 +41,13 @@ export class Registrations {
   }
 
   // Chỉ lấy đề tài đang mở (trangThai === 0)
-  get topics() {
-    return this.topicService.topics()
-      .filter(t => t.trangThai === 0);
+  get availableTopics(): Topic[] {
+    const allTopics = this.topicService.topics();
+    if (!this.isEditing){
+      return allTopics.filter(t => t.trangThai === 0);
+    } else {
+      return allTopics.filter(t => t.trangThai === 0 || t.maDeTai === this.form.maDeTai);
+    }
   }
 
   get filteredRegistrations(): Registration[] {
@@ -58,11 +64,23 @@ export class Registrations {
   }
 
   openAddForm(): void {
+    this.isEditing = false;
+    this.currentMaDangKy = '';
     this.form = {
       mssv: '',
       maDeTai: ''
     };
 
+    this.showForm = true;
+  }
+
+  editRegistration(item: Registration): void {
+    this.isEditing = true;
+    this.currentMaDangKy = item.maDangKy;
+    this.form = {
+      mssv: item.mssv,
+      maDeTai: item.maDeTai
+    };
     this.showForm = true;
   }
 
@@ -72,18 +90,31 @@ export class Registrations {
       return;
     }
 
-    // Gọi service qua Observable và xử lý bất đồng bộ
-    this.registrationService.addRegistration({
-      mssv: this.form.mssv,
-      maDeTai: this.form.maDeTai
-    }).subscribe({
-      next: () => {
-        this.showForm = false;
-      },
-      error: (err) => {
-        alert('Đăng ký không thành công! ' + (err.error?.message || err.message));
-      }
-    });
+    if(this.isEditing) {
+      this.registrationService.updateRegistration(this.currentMaDangKy, {
+        mssv: this.form.mssv,
+        maDeTai: this.form.maDeTai
+      } as any).subscribe({
+        next: () => {
+          this.showForm = false;
+        },
+        error: (err) => {
+          alert('Cập nhật đăng ký không thành công! ' + (err.error?.message || err.message));
+        }
+      });
+    } else {
+      this.registrationService.addRegistration({
+        mssv: this.form.mssv,
+        maDeTai: this.form.maDeTai
+      }).subscribe({
+        next: () => {
+          this.showForm = false;
+        },
+        error: (err) => {
+          alert('Đăng ký không thành công! ' + (err.error?.message || err.message));
+        }
+      });
+    }
   }
 
   deleteRegistration(maDangKy: string): void {
