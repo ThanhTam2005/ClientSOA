@@ -1,77 +1,84 @@
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 
-import { Injectable, signal } from '@angular/core';
-
+// Interface đại diện cho Topic hiển thị trên UI và nhận từ CSDL (TopicEntity)
 export interface Topic {
   maDeTai: string;
   tenDeTai: string;
-  moTa: string;
+  moTa?: string;
   giangVienHuongDan: string;
-  trangThai: number;
+  trangThai: number; // Chỉ đọc trạng thái từ CSDL
+}
+
+// Payload khi tạo mới đề tài (Khớp với CreateTopicDTO)
+export interface CreateTopicDTO {
+  maDeTai: string;
+  tenDeTai: string;
+  moTa?: string;
+  giangVienHuongDan: string;
+}
+
+// Payload khi cập nhật thông tin đề tài (Khớp với UpdateTopicDTO)
+export interface UpdateTopicDTO {
+  tenDeTai?: string;
+  moTa?: string;
+  giangVienHuongDan?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class TopicService {
+  private http = inject(HttpClient);
+  private apiUrl = 'http://localhost:3000/api/topics';
 
-  private readonly topicState = signal<Topic[]>([
-    {
-      maDeTai: 'DT001',
-      tenDeTai: 'Xây dựng hệ thống quản lý khóa luận',
-      moTa: 'Phát triển hệ thống quản lý đề tài theo SOA',
-      giangVienHuongDan: 'Nguyễn Văn A',
-      trangThai: 0
-    },
-    {
-      maDeTai: 'DT002',
-      tenDeTai: 'Ứng dụng Microservices với Node.js',
-      moTa: 'Nghiên cứu và triển khai Microservices',
-      giangVienHuongDan: 'Trần Thị B',
-      trangThai: 1
-    },
-    {
-      maDeTai: 'DT003',
-      tenDeTai: 'Ứng dụng quản lý sinh viên',
-      moTa: 'Xây dựng ứng dụng quản lý sinh viên',
-      giangVienHuongDan: 'Lê Văn C',
-      trangThai: 2
-    }
-  ]);
-
+  // Quản lý trạng thái danh sách đề tài bằng Angular Signal
+  private readonly topicState = signal<Topic[]>([]);
   readonly topics = this.topicState.asReadonly();
 
-  addTopic(topic: Topic): boolean {
-    if (this.topicState().some(
-      t => t.maDeTai === topic.maDeTai
-    )) {
-      return false;
-    }
-
-    this.topicState.update(list => [...list, topic]);
-    return true;
+  constructor() {
+    this.loadTopics(); // Tự động gọi API lấy dữ liệu khi service được khởi tạo
   }
 
-  updateTopic(topic: Topic): void {
-    this.topicState.update(list =>
-      list.map(t =>
-        t.maDeTai === topic.maDeTai ? topic : t
-      )
+  // 1. Tải danh sách đề tài từ API Gateway
+  loadTopics(): void {
+    this.http.get<{ success: boolean; data: Topic[] }>(this.apiUrl).subscribe({
+      next: (res) => {
+        if (res.success && Array.isArray(res.data)) {
+          this.topicState.set(res.data);
+        }
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách đề tài từ API Gateway:', err);
+      }
+    });
+  }
+
+  // 2. Thêm đề tài mới (Tuân thủ CreateTopicDTO)
+  addTopic(payload: CreateTopicDTO): Observable<any> {
+    return this.http.post<any>(this.apiUrl, payload).pipe(
+      tap(() => {
+        this.loadTopics(); // Tải lại danh sách sau khi thêm thành công
+      })
     );
   }
 
-  deleteTopic(maDeTai: string): void {
-    this.topicState.update(list =>
-      list.filter(t => t.maDeTai !== maDeTai)
+  // 3. Cập nhật thông tin đề tài (Tuân thủ UpdateTopicDTO)
+  updateTopic(maDeTai: string, payload: UpdateTopicDTO): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${maDeTai}`, payload).pipe(
+      tap(() => {
+        this.loadTopics(); // Tải lại danh sách sau khi cập nhật
+      })
     );
   }
 
-  updateStatus(maDeTai: string, trangThai: number): void {
-    this.topicState.update(list =>
-      list.map(t =>
-        t.maDeTai === maDeTai
-          ? { ...t, trangThai }
-          : t
-      )
+  // 4. Xóa đề tài
+  deleteTopic(maDeTai: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${maDeTai}`).pipe(
+      tap(() => {
+        this.loadTopics(); // Tải lại danh sách sau khi xóa
+      })
     );
   }
 }

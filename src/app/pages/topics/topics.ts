@@ -2,7 +2,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Topic, TopicService } from '../../services/topic';
+import { Topic, TopicService, CreateTopicDTO, UpdateTopicDTO } from '../../services/topic';
 
 @Component({
   selector: 'app-topics',
@@ -19,15 +19,14 @@ export class Topics {
   showForm = false;
   isEditing = false;
 
-  topicForm: Topic = this.emptyTopic();
+  topicForm = this.emptyTopicForm();
 
-  private emptyTopic(): Topic {
+  private emptyTopicForm() {
     return {
       maDeTai: '',
       tenDeTai: '',
       moTa: '',
-      giangVienHuongDan: '',
-      trangThai: 0
+      giangVienHuongDan: ''
     };
   }
 
@@ -57,53 +56,79 @@ export class Topics {
   }
 
   openAddForm(): void {
-    this.topicForm = this.emptyTopic();
+    this.topicForm = this.emptyTopicForm();
     this.isEditing = false;
     this.showForm = true;
   }
 
   editTopic(topic: Topic): void {
-    this.topicForm = { ...topic };
+    this.topicForm = {
+      maDeTai: topic.maDeTai,
+      tenDeTai: topic.tenDeTai,
+      moTa: topic.moTa || '',
+      giangVienHuongDan: topic.giangVienHuongDan
+    };
     this.isEditing = true;
     this.showForm = true;
   }
 
   saveTopic(): void {
-    const topic: Topic = {
+    const payload = {
       maDeTai: this.topicForm.maDeTai.trim(),
       tenDeTai: this.topicForm.tenDeTai.trim(),
-      moTa: this.topicForm.moTa.trim(),
-      giangVienHuongDan:
-        this.topicForm.giangVienHuongDan.trim(),
-      trangThai: Number(this.topicForm.trangThai)
+      moTa: this.topicForm.moTa?.trim(),
+      giangVienHuongDan: this.topicForm.giangVienHuongDan.trim()
     };
 
     if (
-      !topic.maDeTai ||
-      !topic.tenDeTai ||
-      !topic.giangVienHuongDan
+      !payload.maDeTai ||
+      !payload.tenDeTai ||
+      !payload.giangVienHuongDan
     ) {
       alert('Vui lòng nhập các trường bắt buộc!');
       return;
     }
 
     if (this.isEditing) {
-      this.topicService.updateTopic(topic);
+      const updateData: UpdateTopicDTO = {
+        tenDeTai: payload.tenDeTai,
+        moTa: payload.moTa,
+        giangVienHuongDan: payload.giangVienHuongDan
+      };
+      this.topicService.updateTopic(payload.maDeTai, updateData).subscribe({
+        next: () => {
+          this.showForm = false;
+        },
+        error: (err) => {
+          alert('Có lỗi xảy ra khi cập nhật đề tài:' + (err.error?.message || err.message));
+        }
+      });
     } else {
-      const success = this.topicService.addTopic(topic);
+      const createData: CreateTopicDTO = {
+        maDeTai: payload.maDeTai,
+        tenDeTai: payload.tenDeTai,
+        moTa: payload.moTa,
+        giangVienHuongDan: payload.giangVienHuongDan
+      };
 
-      if (!success) {
-        alert('Mã đề tài đã tồn tại!');
-        return;
-      }
+      this.topicService.addTopic(createData).subscribe({
+        next: () => {
+          this.showForm = false;
+        },
+        error: (err) => {
+          alert('Có lỗi xảy ra khi thêm đề tài:' + (err.error?.message || err.message));
+        }
+      });
     }
-
-    this.showForm = false;
   }
 
   deleteTopic(maDeTai: string): void {
     if (confirm('Bạn có chắc muốn xóa đề tài này?')) {
-      this.topicService.deleteTopic(maDeTai);
+      this.topicService.deleteTopic(maDeTai).subscribe({
+        error: (err) => {
+          alert('Có lỗi xảy ra khi xóa đề tài:' + (err.error?.message || err.message));
+        }
+      });
     }
   }
 

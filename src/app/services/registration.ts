@@ -1,8 +1,9 @@
-
 import { Injectable, inject, signal } from '@angular/core';
-import { StudentService } from './student';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 import { TopicService } from './topic';
 
+// Khớp với RegistrationEntity (Bảng DANGKY)[cite: 22]
 export interface Registration {
   maDangKy: string;
   mssv: string;
@@ -12,96 +13,74 @@ export interface Registration {
   ngayDangKy: string;
 }
 
+// Khớp với CreateRegistrationDTO (Payload tạo mới)[cite: 22]
+export interface CreateRegistrationDTO {
+  mssv: string;
+  maDeTai: string;
+}
+
+// Khớp với UpdateRegistrationDTO (Payload cập nhật)[cite: 22]
+export interface UpdateRegistrationDTO {
+  tenSinhVien?: string;
+  tenDeTai?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class RegistrationService {
-
-  private studentService = inject(StudentService);
+  private http = inject(HttpClient);
   private topicService = inject(TopicService);
+  private apiUrl = 'http://localhost:3000/api/registrations';
 
-  private readonly registrationState =
-    signal<Registration[]>([]);
+  // Quản lý trạng thái danh sách đăng ký bằng Angular Signal
+  private readonly registrationState = signal<Registration[]>([]);
+  readonly registrations = this.registrationState.asReadonly();
 
-  readonly registrations =
-    this.registrationState.asReadonly();
-
-  addRegistration(
-    mssv: string,
-    maDeTai: string
-  ): boolean {
-
-    const student = this.studentService.students()
-      .find(s => s.id === mssv);
-
-    const topic = this.topicService.topics()
-      .find(t => t.maDeTai === maDeTai);
-
-    if (!student || !topic) {
-      return false;
-    }
-
-    // Chỉ cho phép đăng ký đề tài đang mở
-    if (topic.trangThai !== 0) {
-      return false;
-    }
-
-    // Kiểm tra sinh viên đã đăng ký chưa
-    const exists = this.registrationState()
-      .some(r => r.mssv === mssv);
-
-    if (exists) {
-      return false;
-    }
-
-    const nextId = Math.max(
-      0,
-      ...this.registrationState().map(r =>
-        Number(r.maDangKy.replace('DK', '')) || 0
-      )
-    ) + 1;
-
-    const registration: Registration = {
-      maDangKy: 'DK' + String(nextId).padStart(3, '0'),
-      mssv: student.id,
-      tenSinhVien: student.name,
-      maDeTai: topic.maDeTai,
-      tenDeTai: topic.tenDeTai,
-      ngayDangKy: new Date().toLocaleDateString('en-CA')
-    };
-
-    this.registrationState.update(list => [
-      ...list,
-      registration
-    ]);
-
-    // Cập nhật trạng thái đề tài
-    this.topicService.updateStatus(maDeTai, 1);
-
-    return true;
+  constructor() {
+    this.loadRegistrations(); // Tự động tải danh sách khi khởi tạo
   }
 
-  deleteRegistration(maDangKy: string): void {
-    const registration = this.registrationState()
-      .find(r => r.maDangKy === maDangKy);
+  // 1. Tải danh sách đăng ký từ API Gateway
+  loadRegistrations(): void {
+    this.http.get<{ success: boolean; data: Registration[] }>(this.apiUrl).subscribe({
+      next: (res) => {
+        if (res.success && Array.isArray(res.data)) {
+          this.registrationState.set(res.data);
+        }
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách đăng ký từ API Gateway:', err);
+      }
+    });
+  }
 
-    if (!registration) {
-      return;
-    }
-
-    this.registrationState.update(list =>
-      list.filter(r => r.maDangKy !== maDangKy)
+  // 2. Gửi yêu cầu đăng ký mới (Tuân thủ CreateRegistrationDTO)[cite: 22]
+  addRegistration(payload: CreateRegistrationDTO): Observable<any> {
+    return this.http.post<any>(this.apiUrl, payload).pipe(
+      tap(() => {
+        this.loadRegistrations(); // Tải lại danh sách sau khi thêm thành công
+        this.topicService.loadTopics(); // Tải lại danh sách đề tài để cập nhật số lượng đăng ký
+      })
     );
+  }
 
-    // Mở lại đề tài nếu không còn đăng ký nào
-    const stillRegistered = this.registrationState()
-      .some(r => r.maDeTai === registration.maDeTai);
+  // 3. Cập nhật thông tin đăng ký (Tuân thủ UpdateRegistrationDTO)[cite: 22]
+  updateRegistration(maDangKy: string, payload: UpdateRegistrationDTO): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${maDangKy}`, payload).pipe(
+      tap(() => {
+        this.loadRegistrations(); // Tải lại danh sách sau khi cập nhật
+      })
+    );
+  }
 
-    if (!stillRegistered) {
-      this.topicService.updateStatus(
-        registration.maDeTai,
-        0
-      );
-    }
+  // 4. Hủy / Xóa đăng ký
+  deleteRegistration(maDangKy: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${maDangKy}`).pipe(
+      tap(() => {
+        this.loadRegistrations(); // Tải lại danh sách sau khi xóa
+        this.topicService.loadTopics(); // Tải lại danh sách đề tài để cập nhật số lượng đăng ký
+      })
+    );
   }
 }

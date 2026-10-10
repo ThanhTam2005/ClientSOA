@@ -88,14 +88,7 @@
 
                 <label>Giảng viên hướng dẫn *</label>
                 <input name="giangVienHuongDan" [(ngModel)]="topicForm.giangVienHuongDan" required />
-
-                <label>Trạng thái</label>
-                <select name="trangThai" [(ngModel)]="topicForm.trangThai">
-                    <option [ngValue]="0">Mở đăng ký</option>
-                    <option [ngValue]="1">Đã đăng ký</option>
-                    <option [ngValue]="2">Đã đóng</option>
-                </select>
-
+                
                 <div class="form-actions">
                     <button type="button" class="btn-cancel" (click)="cancelForm()">
                         Hủy

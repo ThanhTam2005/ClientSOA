@@ -1,4 +1,3 @@
-
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -19,9 +18,7 @@ import { TopicService } from '../../services/topic';
 })
 export class Registrations {
 
-  private registrationService =
-    inject(RegistrationService);
-
+  private registrationService = inject(RegistrationService);
   private studentService = inject(StudentService);
   private topicService = inject(TopicService);
 
@@ -41,7 +38,7 @@ export class Registrations {
     }));
   }
 
-  // Chỉ lấy đề tài đang mở
+  // Chỉ lấy đề tài đang mở (trangThai === 0)
   get topics() {
     return this.topicService.topics()
       .filter(t => t.trangThai === 0);
@@ -54,9 +51,9 @@ export class Registrations {
       .filter(r =>
         r.maDangKy.toLowerCase().includes(keyword) ||
         r.mssv.toLowerCase().includes(keyword) ||
-        r.tenSinhVien.toLowerCase().includes(keyword) ||
+        (r.tenSinhVien && r.tenSinhVien.toLowerCase().includes(keyword)) ||
         r.maDeTai.toLowerCase().includes(keyword) ||
-        r.tenDeTai.toLowerCase().includes(keyword)
+        (r.tenDeTai && r.tenDeTai.toLowerCase().includes(keyword))
       );
   }
 
@@ -75,27 +72,27 @@ export class Registrations {
       return;
     }
 
-    const success =
-      this.registrationService.addRegistration(
-        this.form.mssv,
-        this.form.maDeTai
-      );
-
-    if (!success) {
-      alert(
-        'Đăng ký không thành công! ' +
-        'Kiểm tra sinh viên hoặc trạng thái đề tài.'
-      );
-      return;
-    }
-
-    this.showForm = false;
+    // Gọi service qua Observable và xử lý bất đồng bộ
+    this.registrationService.addRegistration({
+      mssv: this.form.mssv,
+      maDeTai: this.form.maDeTai
+    }).subscribe({
+      next: () => {
+        this.showForm = false;
+      },
+      error: (err) => {
+        alert('Đăng ký không thành công! ' + (err.error?.message || err.message));
+      }
+    });
   }
 
   deleteRegistration(maDangKy: string): void {
     if (confirm('Bạn có chắc muốn hủy đăng ký này?')) {
-      this.registrationService
-        .deleteRegistration(maDangKy);
+      this.registrationService.deleteRegistration(maDangKy).subscribe({
+        error: (err) => {
+          alert('Lỗi khi hủy đăng ký: ' + (err.error?.message || err.message));
+        }
+      });
     }
   }
 
