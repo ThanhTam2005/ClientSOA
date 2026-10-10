@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { RegistrationService } from './registration';
@@ -32,7 +32,7 @@ export interface UpdateTopicDTO {
 })
 export class TopicService {
   private http = inject(HttpClient);
-  private registrationService = inject(RegistrationService);
+  private injector = inject(Injector);
   private apiUrl = 'http://localhost:3000/api/topics';
 
   // Quản lý trạng thái danh sách đề tài bằng Angular Signal
@@ -71,7 +71,7 @@ export class TopicService {
     return this.http.put<any>(`${this.apiUrl}/${maDeTai}`, payload).pipe(
       tap(() => {
         this.loadTopics(); // Tải lại danh sách sau khi cập nhật
-        this.registrationService.loadRegistrations(); // Tải lại danh sách đăng ký để cập nhật thông tin đề tài
+        this.injector.get(RegistrationService).loadRegistrations(); // Tải lại danh sách đăng ký để cập nhật thông tin đề tài
       })
     );
   }
@@ -81,7 +81,7 @@ export class TopicService {
     return this.http.delete<any>(`${this.apiUrl}/${maDeTai}`).pipe(
       tap(() => {
         this.loadTopics(); // Tải lại danh sách sau khi xóa
-        this.registrationService.loadRegistrations(); // Tải lại danh sách đăng ký để cập nhật thông tin đề tài
+        this.injector.get(RegistrationService).loadRegistrations(); // Tải lại danh sách đăng ký để cập nhật thông tin đề tài
       })
     );
   }

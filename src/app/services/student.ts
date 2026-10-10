@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, Injector } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { RegistrationService } from './registration';
@@ -39,7 +39,7 @@ export interface UpdateStudentDTO {
 })
 export class StudentService {
   private http = inject(HttpClient);
-  private registrationService = inject(RegistrationService);
+  private injector = inject(Injector);
   private apiUrl = 'http://localhost:3000/api/students';
 
   // Quản lý trạng thái danh sách sinh viên hiển thị trên UI bằng Angular Signal
@@ -84,7 +84,7 @@ export class StudentService {
     return this.http.put<any>(`${this.apiUrl}/${mssv}`, payload).pipe(
       tap(() => {
         this.loadStudents();                           // Tải lại danh sách sinh viên
-        this.registrationService.loadRegistrations();    // Tải lại danh sách đăng ký để cập nhật thông tin liên quan
+        this.injector.get(RegistrationService).loadRegistrations(); // Tải lại danh sách đăng ký
       })
     );
   }
@@ -94,7 +94,7 @@ export class StudentService {
     return this.http.delete<any>(`${this.apiUrl}/${id}`).pipe(
       tap(() => {
         this.loadStudents();                           // Tải lại danh sách sinh viên
-        this.registrationService.loadRegistrations();    // Tải lại danh sách đăng ký
+        this.injector.get(RegistrationService).loadRegistrations(); // Tải lại danh sách đăng ký
       })
     );
   }

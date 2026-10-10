@@ -2,10 +2,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  Student,
-  StudentService
-} from '../../services/student';
+import { Student, StudentService, CreateStudentDTO, UpdateStudentDTO } from '../../services/student';
 
 @Component({
   selector: 'app-students',
@@ -38,7 +35,8 @@ export class Students {
     return this.studentService.students().filter(student =>
       student.id.toLowerCase().includes(keyword) ||
       student.name.toLowerCase().includes(keyword) ||
-      student.email.toLowerCase().includes(keyword)
+      student.email.toLowerCase().includes(keyword) ||
+      student.major.toLowerCase().includes(keyword)
     );
   }
 
@@ -55,7 +53,7 @@ export class Students {
   }
 
   saveStudent(): void {
-    const student: Student = {
+    const payload: Student = {
       id: this.studentForm.id.trim(),
       name: this.studentForm.name.trim(),
       email: this.studentForm.email.trim(),
@@ -63,32 +61,54 @@ export class Students {
     };
 
     if (
-      !student.id ||
-      !student.name ||
-      !student.email ||
-      !student.major
+      !payload.id ||
+      !payload.name ||
+      !payload.email ||
+      !payload.major
     ) {
       alert('Vui lòng nhập đầy đủ thông tin!');
       return;
     }
 
     if (this.isEditing) {
-      this.studentService.updateStudent(student);
+      const updateData: UpdateStudentDTO = {
+        hoTen: payload.name,
+        email: payload.email,
+        lop: payload.major
+      };
+      this.studentService.updateStudent(payload.id, updateData).subscribe({
+        next: () => {
+          this.showForm = false;
+        },
+        error: (err) => {
+          alert('Có lỗi xảy ra khi cập nhật sinh viên.');
+        }
+      });
     } else {
-      const success = this.studentService.addStudent(student);
-
-      if (!success) {
-        alert('Mã sinh viên đã tồn tại!');
-        return;
-      }
+      const createData: CreateStudentDTO = {
+        mssv: payload.id,
+        hoTen: payload.name,
+        email: payload.email,
+        lop: payload.major
+      };
+      this.studentService.addStudent(createData).subscribe({
+        next: () => {
+          this.showForm = false;
+        },
+        error: (err) => {
+          alert('Có lỗi xảy ra khi thêm sinh viên.');
+        }
+      });
     }
-
-    this.showForm = false;
   }
 
   deleteStudent(id: string): void {
     if (confirm('Bạn có chắc muốn xóa sinh viên này?')) {
-      this.studentService.deleteStudent(id);
+      this.studentService.deleteStudent(id).subscribe({
+        error: (err) => {
+          alert('Có lỗi xảy ra khi xóa sinh viên.');
+        }
+      });
     }
   }
 
